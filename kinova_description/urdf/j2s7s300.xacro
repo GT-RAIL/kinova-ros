@@ -113,7 +113,8 @@
     <!--xacro:macro name="jaco_robot" params="parent prefix"-->
     <property name="default_base_trans" value="0 0 0" />
     <property name="default_base_rot" value="0 0 0" />
-    <xacro:macro name="j2s7s300" params="base_parent prefix:=j2s7s300 trans:=${default_base_trans} rot:=${default_base_rot}">
+    <xacro:macro name="j2s7s300" params="base_parent prefix:=j2s7s300 trans:=${default_base_trans}
+    rot:=${default_base_rot} gripper_angle_offset:=0">
 
         <xacro:gazebo_config robot_namespace="${prefix}"/>
     
@@ -153,7 +154,7 @@
         <joint name="${prefix}_joint_7" type="continuous">
           <parent link="${prefix}_link_6" />
           <child link = "${prefix}_link_7" />
-          <origin xyz="0 0.06075 0" rpy="${J_PI/2} 0 0" />
+          <origin xyz="0 0.06075 0" rpy="${J_PI/2} $(gripper_angle_offset) ${0}" />
           <axis xyz="0 0 1" />
           <limit effort="600.8" velocity="0.785"/>
           <dynamics damping="0.0" friction="0.0"/>
