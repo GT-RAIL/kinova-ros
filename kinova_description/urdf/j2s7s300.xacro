@@ -154,7 +154,7 @@
         <joint name="${prefix}_joint_7" type="continuous">
           <parent link="${prefix}_link_6" />
           <child link = "${prefix}_link_7" />
-          <origin xyz="0 0.06075 0" rpy="${J_PI/2} $(gripper_angle_offset) ${0}" />
+          <origin xyz="0 0.06075 0" rpy="${J_PI/2} ${gripper_angle_offset} ${0}" />
           <axis xyz="0 0 1" />
           <limit effort="600.8" velocity="0.785"/>
           <dynamics damping="0.0" friction="0.0"/>
