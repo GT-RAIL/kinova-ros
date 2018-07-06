@@ -5,8 +5,9 @@
 
 #include <actionlib/server/simple_action_server.h>
 #include <boost/foreach.hpp>
-#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/mutex.hpp>
 #include <control_msgs/FollowJointTrajectoryAction.h>
+#include <dynamic_reconfigure/Reconfigure.h>
 #include <ecl/geometry.hpp>
 #include <kinova_msgs/Stop.h>
 #include <kinova_msgs/Start.h>
@@ -45,6 +46,8 @@ public:
 
   void executeSmoothTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr &goal);
 
+  void publishCmd(const ros::TimerEvent &t);
+
 private:
   ros::NodeHandle n;
   ros::NodeHandle pnh;
@@ -63,7 +66,7 @@ private:
   ros::ServiceServer start_force_control_service_;
   ros::ServiceServer stop_force_control_service_;
 
-  boost::recursive_mutex executionMutex;
+  boost::mutex trajectory_point_mutex;
 
   // Parameters
   double maxCurvature;
@@ -73,6 +76,12 @@ private:
   sensor_msgs::JointState jointStates;
 
   std::vector<std::string> jointNames;
+
+  std::vector<double> joint_kp;
+  std::vector<double> joint_kv;
+
+  bool joint_state_flag;
+  kinova_msgs::JointVelocity trajectoryPoint;
 };
 
 #endif
