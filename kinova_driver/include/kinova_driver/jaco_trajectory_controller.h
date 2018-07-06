@@ -23,7 +23,7 @@
 #define RAD_TO_DEG (180/M_PI)
 
 //gains for trajectory follower
-#define KP 225.0
+#define KP 175.0
 #define KV 10.0
 #define ERROR_THRESHOLD .001 //threshold in radians for error at each joint to consider motion a success
 

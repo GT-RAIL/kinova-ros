@@ -18,22 +18,22 @@ JacoTrajectoryController::JacoTrajectoryController() : pnh("~"),
   jointNames.push_back("j2s7s300_joint_7");
 
   joint_kp.clear();
-  joint_kp.push_back(255);
-  joint_kp.push_back(255);
-  joint_kp.push_back(255);
-  joint_kp.push_back(255);
-  joint_kp.push_back(255);
-  joint_kp.push_back(255);
-  joint_kp.push_back(255);
+  joint_kp.push_back(KP);
+  joint_kp.push_back(KP);
+  joint_kp.push_back(KP);
+  joint_kp.push_back(KP);
+  joint_kp.push_back(KP);
+  joint_kp.push_back(KP);
+  joint_kp.push_back(KP);
 
   joint_kv.clear();
-  joint_kv.push_back(100);
-  joint_kv.push_back(100);
-  joint_kv.push_back(100);
-  joint_kv.push_back(100);
-  joint_kv.push_back(100);
-  joint_kv.push_back(100);
-  joint_kv.push_back(100);
+  joint_kv.push_back(KV);
+  joint_kv.push_back(KV);
+  joint_kv.push_back(KV);
+  joint_kv.push_back(KV);
+  joint_kv.push_back(KV);
+  joint_kv.push_back(KV);
+  joint_kv.push_back(KV);
 
   jointStates.position.resize(NUM_JACO_JOINTS);
   jointStates.velocity.resize(NUM_JACO_JOINTS);
@@ -438,7 +438,6 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
         for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
         {
           current_joint_pos[i] = jointStates.position[i];
-//          current_joint_pos[i] = armState.position[i];
         }
 
         bool jointError = false;
@@ -470,7 +469,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
           {
             ROS_INFO("No joint error");
           }
-          else if (ros::Time::now().toSec() - finalPointTime.toSec() >= 5.0)
+          else if (ros::Time::now().toSec() - finalPointTime.toSec() >= 3.0)
           {
             ROS_INFO("5 second timeout reached");
           }
@@ -533,7 +532,6 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
       }
 
       //for debugging:
-      // cout << "Errors: " << error[0] << ", " << error[1] << ", " << error[2] << ", " << error[3] << ", " << error[4] << ", " << error[5] << endl;
       // cout << error[0] << ", " << error[1] << ", " << error[2] << ", " << error[3] << ", " << error[4] << ", " << error[5] << ", " << error[6] << endl;
 
       for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
