@@ -169,6 +169,10 @@ KinovaArm::KinovaArm(KinovaComm &arm, const ros::NodeHandle &nodeHandle, const s
     {
         joint_names_[arm_joint_number_+finger_number_+i] = tf_prefix_ + "joint_finger_tip_" + boost::lexical_cast<std::string>(i+1);
     }
+    for (int i = 0; i<finger_number_; i++)
+    {
+        joint_names_[arm_joint_number_+finger_number_+i] = tf_prefix_ + "joint_finger_tip_" + boost::lexical_cast<std::string>(i+1);
+    }
 
     /* Set up Services */
     stop_service_ = node_handle_.advertiseService("in/stop", &KinovaArm::stopServiceCallback, this);
