@@ -9,7 +9,6 @@
   <arg name="status_interval_seconds" default="0.01"/>
   <arg name="status_interval_seconds_torques" default="0.02"/>
   <arg name="gf_effort" default="True"/>
-  <arg name="use_jaco_v1_fingers" default="false" />
 
   <!-- If the node handles multiple robots uncomment this and configure /config/multiple_robots.yaml" -->
   <!--rosparam file="$(find kinova_bringup)/launch/config/multiple_robots.yaml" command="load" /-->
@@ -17,7 +16,7 @@
   <node name="$(arg kinova_robotName)_driver" pkg="kinova_driver" type="kinova_arm_driver" output="screen" cwd="node" args="$(arg kinova_robotType)">
     <rosparam file="$(find kinova_bringup)/launch/config/robot_parameters.yaml" command="load" />
     <param name="serial_number" value="$(arg kinova_robotSerial)" />   
-    <param name="robot_name" value="$(arg kinova_robotName)" />
+    <param name="robot_name" value="$(arg kinova_robotName)" />   
     <param name="robot_type" value="$(arg kinova_robotType)" />
     <param name="status_interval_seconds" value="$(arg status_interval_seconds)" />
     <!-- WARN: we have a sparate status for joint torques being published. Assume they are not
@@ -29,7 +28,6 @@
     <!-- This flag sets whether joint_states topic containts gravity compensated effort. For the effort
 	 not in joint_states, it is published in its own topic at a separate rate -->
     <param name="gf_effort" value="$(arg gf_effort)" />
-    <param name="use_jaco_v1_fingers" value="$(arg use_jaco_v1_fingers)" />
   </node>
 
   <!--

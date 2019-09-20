@@ -41,7 +41,7 @@ def gripper_client(finger_positions):
         return client.get_result()
     else:
         client.cancel_all_goals()
-        rospy.logwarn('        the gripper action timed-out')
+        rospy.WARN('        the gripper action timed-out')
         return None
 
 
