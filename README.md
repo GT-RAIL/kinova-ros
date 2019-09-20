@@ -1,5 +1,5 @@
-# Table of Contents
-- [Important](#important)
+# Table of Contents 
+- [Important](#important) 
 - [Kinova-ROS](#kinova-ros)
   - [Supported versions](#supported-versions)
   - [Gazebo](#gazebo)
@@ -27,12 +27,15 @@
 
 # Important
 
-kinova-driver release 1.2.1.
+This repository contains source code and configuration files to support the Jaco, Jaco2 and Mico arms in ROS.
 
-For quicker bug-fixes and updates a beta version of the branch has been added. Use this if you would like to use the latest code.
-To contribute fixes please add pull requests to this beta branch.
+This repository doesn't support the Gen3 arm in ROS. Have a look at the [ros_kortex repository](https://github.com/Kinovarobotics/ros_kortex) for Gen3 ROS support!
 
-The previous ROS release, which mainly developed for jaco arm will be named as **jaco-ros** and the previous **master** branch is renamed as **jaco-ros-master** branch. Users can keep both **jaco-ros** and new release **kinova-ros** as two parallel stacks. However, further updates and support will only be available on "kinova-ros".
+
+# Supported versions
+The master branch has been tested with ROS Kinetic and ROS Melodic.
+
+You can checkout the [indigo-devel](https://github.com/Kinovarobotics/kinova-ros/tree/indigo-devel) for ROS Indigo and Ubuntu 14.04 support, but the branch is no longer maintained. 
 
 =======
 #### New in release 1.2.1
@@ -76,12 +79,7 @@ For all robots:
 
 # Kinova-ROS
 
-The `kinova-ros` stack provides a ROS interface for the Kinova Robotics JACO, JACO2 and MICO robotic manipulator arms, and it is built to support further kinova products as well. Besides wide support of Kinova products, there are many bug fixes, improvements and new features as well. The stack is developed above the Kinova C++ API functions, which communicate with the DSP inside robot base. 
-
-## Supported versions
-The recommended configuration is ROS Indigo with 64 bit Ubuntu 14.04.
-
-The package may work with other configurations as well, but it has only been tested for the one recommended above. 
+The `kinova-ros` stack provides a ROS interface for the Kinova Robotics JACO, JACO2 and MICO robotic manipulator arms. Besides wide support of Kinova products, there are many bug fixes, improvements and new features as well. The stack is developed above the Kinova C++ API functions, which communicate with the DSP inside robot base. 
 
 ## Gazebo 
 #### New in release 1.2.0
@@ -182,13 +180,12 @@ Joint position can be observed by echoing two topics:
   - start the node of interactive conrol: rosrun kinova_driver kinova_interactive_control m1n4s200
   - open Rviz: rosrun rviz rviz
 
-  - On left plane of Rviz, **Add** **InteractiveMarkers**, click on the right of **Updated Topic** of the added interactive marker, and select the topic */m1n4s200_interactive_control_Joint/update*
-  - Now a ring should appear at each joint location, and you can move the robot by dragging the rings.
-
-
+  - On left plane of Rviz, **Add** **InteractiveMarkers**, click on the right of **Updated Topic** of the added interactive marker, and select t 
+Cartesian position control can be realized by calling KinovaComm::setCartesianPosition() in customized node. Alternatively, you may simply call the node `pose_action_client.py` in the kinova_demo package. Help information is availabe with the `-h` option. The unit of position command can be specified by `{mq | mdeg | mrad}`, which refers to meter&Quaternion, meter&degree and meter&radian. The unit of position is always meter, and the unit of orientation is different. Degree and radian are in relation to Euler Angles in XYZ order. Please be aware that the length of parameters are different when using Quaternion and Euler Angles. With the option `-v` on, positions in other unit formats are printed for convenience. The following code will drive a mico robot to move along +x axis for 1cm and rotate the hand for +10 degree along hand axis. The last second **10** will be ignored since a 4DOF robot cannot rotate along the y axis.
 
 ### Cartesian position control
-Cartesian position control can be realized by calling KinovaComm::setCartesianPosition() in customized node. Alternatively, you may simply call the node `pose_action_client.py` in the kinova_demo package. Help information is availabe with the `-h` option. The unit of position command can be specified by `{mq | mdeg | mrad}`, which refers to meter&Quaternion, meter&degree and meter&radian. The unit of position is always meter, and the unit of orientation is different. Degree and radian are in relation to Euler Angles in XYZ order. Please be aware that the length of parameters are different when using Quaternion and Euler Angles. With the option `-v` on, positions in other unit formats are printed for convenience. The following code will drive a mico robot to move along +x axis for 1cm and rotate the hand for +10 degree along hand axis. The last second **10** will be ignored since a 4DOF robot cannot rotate along the y axis.
+
+Cartesian position control can be realized by calling KinovaComm::setCartesianPosition() in customized node. Alternatively, you may simply call the node pose_action_client.py in the kinova_demo package. Help information is availabe with the -h option. The unit of position command can be specified by {mq | mdeg | mrad}, which refers to meter&Quaternion, meter&degree and meter&radian. The unit of position is always meter, and the unit of orientation is different. Degree and radian are in relation to Euler Angles in XYZ order. Please be aware that the length of parameters are different when using Quaternion and Euler Angles. With the option -v on, positions in other unit formats are printed for convenience. The following code will drive a mico robot to move along +x axis for 1cm and rotate the hand for +10 degree along hand axis. The last second 10 will be ignored since a 4DOF robot cannot rotate along the y axis.
 
 **eg**: `rosrun kinova_demo pose_action_client.py -v -r m1n4s200 mdeg -- 0.01 0 0 0 10 10`
 
@@ -197,6 +194,8 @@ The Cartesian coordinate of robot root frame is defined by the following rules:
 - +x axis is directing to the left when facing the base panel (where power switch and cable socket locate).
 - +y axis is towards to user when facing the base panel.
 - +z axis is upwards when robot is standing on a flat surface.
+
+The kinova_tool_pose_action (action server called by `pose_action_client.py`) will send Cartesian position commands to the robot and the inverse kinematics will be handled within the robot. **Important** The inverse kinematics algorithm that is implemented within Kinova robots is programmed to automatically avoid singularities and self-collisions. To perform those avoidance, the algorithm will restrict access to some parts of the robot's workspace. It may happen that the Cartesian pose goal you send cannot be reached by the robot, although it belongs to the robot's workspace. For more details on why this can happen, and what can you do to avoid this situation, please see the Q & A in issue #149. As a rule of thumb, if you are not able to reach the pose you are commanding in `pose_action_client.py` by moving your Kinova robot with the Kinova joystick, the robot will not be able to reach this same pose with the action server either. If you do not want to use the robot's IK solver, you can always use MoveIt instead. 
 
 The current Cartesian position is published via topic: `/'${kinova_robotType}_driver'/out/tool_pose`
 In addition, the wrench of end-effector is published via topic: `/'${kinova_robotType}_driver'/out/tool_wrench`
@@ -405,25 +404,6 @@ Other plugins in rqt can similarly be used for quick interation with the robot.
   - ClearTrajectories
   - SetTorqueControlMode
 
-
-#### Comparison to JACO-ROS
-
-- Migrate from jaco to kinova in the scope of: file names, class names, function names, data type, node, topic, etc.
-- Apply kinova_RobotType for widely support
-- Re-define JointAngles for consistence
-- Updated API version with new features
-- Create transform between different Euler Angle definitions in DSP and ROS
-- Criteron check when if reach the goal
-- URDF models for all robotTypes
-- Interactive for joint control
-- New message for KinovaPose
-- More options for actionlibs arguments, etc.
-- Relative motion control
-- Kinematic solution to be consistant with robot base code.
-- Fix joint offset bug for joint2 and joint6
-- Fix joint velocity control and position velocity control
-
-
 ## Notes and Limitations
 1. Force/torque control is only for advanced users. Please use caution when using force/torque control api functions.
 
@@ -437,6 +417,4 @@ Other plugins in rqt can similarly be used for quick interation with the robot.
 
 
 ## Report a Bug
-Any bugs, issues or suggestions may be sent to ros@kinovarobotics.com.
-
-
+Any bugs, issues or suggestions may be sent to support@kinova.ca
