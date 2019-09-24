@@ -600,29 +600,29 @@ void KinovaArm::publishJointAngles(void)
          joint_state.position[6] = current_angles.Actuator7 * M_PI/180;
     }
 
-    if (kinova_gripper_)
-    {
-        if(finger_number_==2)
-        {
-            // proximal phalanges
-            joint_state.position[joint_total_number_-4] = fingers.Finger1 * finger_conv_ratio_ * M_PI/180;
-            joint_state.position[joint_total_number_-3] = fingers.Finger2 * finger_conv_ratio_ * M_PI/180;
-            // distal phalanges
-            joint_state.position[joint_total_number_-2] = 0;
-            joint_state.position[joint_total_number_-1] = 0;
-        }
-        else if(finger_number_==3)
-        {
-            // proximal phalanges
-            joint_state.position[joint_total_number_-6] = fingers.Finger1 * finger_conv_ratio_ * M_PI/180;
-            joint_state.position[joint_total_number_-5] = fingers.Finger2 * finger_conv_ratio_ * M_PI/180;
-            joint_state.position[joint_total_number_-4] = fingers.Finger3 * finger_conv_ratio_ * M_PI/180;
-            // distal phalanges
-            joint_state.position[joint_total_number_-3] = 0;
-            joint_state.position[joint_total_number_-2] = 0;
-            joint_state.position[joint_total_number_-1] = 0;
-        }
-    }
+    // if (kinova_gripper_)
+    // {
+    //     if(finger_number_==2)
+    //     {
+    //         // proximal phalanges
+    //         joint_state.position[joint_total_number_-4] = fingers.Finger1 * finger_conv_ratio_ * M_PI/180;
+    //         joint_state.position[joint_total_number_-3] = fingers.Finger2 * finger_conv_ratio_ * M_PI/180;
+    //         // distal phalanges
+    //         joint_state.position[joint_total_number_-2] = 0;
+    //         joint_state.position[joint_total_number_-1] = 0;
+    //     }
+    //     else if(finger_number_==3)
+    //     {
+    //         // proximal phalanges
+    //         joint_state.position[joint_total_number_-6] = fingers.Finger1 * finger_conv_ratio_ * M_PI/180;
+    //         joint_state.position[joint_total_number_-5] = fingers.Finger2 * finger_conv_ratio_ * M_PI/180;
+    //         joint_state.position[joint_total_number_-4] = fingers.Finger3 * finger_conv_ratio_ * M_PI/180;
+    //         // distal phalanges
+    //         joint_state.position[joint_total_number_-3] = 0;
+    //         joint_state.position[joint_total_number_-2] = 0;
+    //         joint_state.position[joint_total_number_-1] = 0;
+    //     }
+    // }
 
     // Joint velocities
     KinovaAngles current_vels;
@@ -701,49 +701,49 @@ void KinovaArm::publishJointAngles(void)
         joint_state.effort[6] = joint_tqs.Actuator7;
     }
 
-    if (kinova_gripper_)
-    {
-        FingerAngles fingers;
-        kinova_comm_.getFingerPositions(fingers);
+    // if (kinova_gripper_)
+    // {
+    //     FingerAngles fingers;
+    //     kinova_comm_.getFingerPositions(fingers);
 
-        if(finger_number_==2)
-        {
-          joint_state.position[joint_total_number_-2] = fingers.Finger1/6800*80*M_PI/180;
-          joint_state.position[joint_total_number_-1] = fingers.Finger2/6800*80*M_PI/180;
-        }
-        else if(finger_number_==3)
-        {
-          joint_state.position[joint_total_number_-3] = fingers.Finger1/6800*80*M_PI/180;
-          joint_state.position[joint_total_number_-2] = fingers.Finger2/6800*80*M_PI/180;
-          joint_state.position[joint_total_number_-1] = fingers.Finger3/6800*80*M_PI/180;
-        }
+    //     if(finger_number_==2)
+    //     {
+    //       joint_state.position[joint_total_number_-2] = fingers.Finger1/6800*80*M_PI/180;
+    //       joint_state.position[joint_total_number_-1] = fingers.Finger2/6800*80*M_PI/180;
+    //     }
+    //     else if(finger_number_==3)
+    //     {
+    //       joint_state.position[joint_total_number_-3] = fingers.Finger1/6800*80*M_PI/180;
+    //       joint_state.position[joint_total_number_-2] = fingers.Finger2/6800*80*M_PI/180;
+    //       joint_state.position[joint_total_number_-1] = fingers.Finger3/6800*80*M_PI/180;
+    //     }
 
-        // no velocity info for fingers
-        if(finger_number_==2)
-        {
-            joint_state.velocity[joint_total_number_-2] = 0;
-            joint_state.velocity[joint_total_number_-1] = 0;
-        }
-        else if(finger_number_==3)
-        {
-            joint_state.velocity[joint_total_number_-3] = 0;
-            joint_state.velocity[joint_total_number_-2] = 0;
-            joint_state.velocity[joint_total_number_-1] = 0;
-        }
+    //     // no velocity info for fingers
+    //     if(finger_number_==2)
+    //     {
+    //         joint_state.velocity[joint_total_number_-2] = 0;
+    //         joint_state.velocity[joint_total_number_-1] = 0;
+    //     }
+    //     else if(finger_number_==3)
+    //     {
+    //         joint_state.velocity[joint_total_number_-3] = 0;
+    //         joint_state.velocity[joint_total_number_-2] = 0;
+    //         joint_state.velocity[joint_total_number_-1] = 0;
+    //     }
 
-        // no effort info for fingers
-        if(finger_number_==2)
-        {
-            joint_state.effort[joint_total_number_-2] = 0;
-            joint_state.effort[joint_total_number_-1] = 0;
-        }
-        else if(finger_number_==3)
-        {
-            joint_state.effort[joint_total_number_-3] = 0;
-            joint_state.effort[joint_total_number_-2] = 0;
-            joint_state.effort[joint_total_number_-1] = 0;
-        }
-    }
+    //     // no effort info for fingers
+    //     if(finger_number_==2)
+    //     {
+    //         joint_state.effort[joint_total_number_-2] = 0;
+    //         joint_state.effort[joint_total_number_-1] = 0;
+    //     }
+    //     else if(finger_number_==3)
+    //     {
+    //         joint_state.effort[joint_total_number_-3] = 0;
+    //         joint_state.effort[joint_total_number_-2] = 0;
+    //         joint_state.effort[joint_total_number_-1] = 0;
+    //     }
+    // }
 
     joint_state_publisher_.publish(joint_state);
 
