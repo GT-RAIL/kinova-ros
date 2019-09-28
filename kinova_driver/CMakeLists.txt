@@ -17,7 +17,7 @@ find_package(catkin REQUIRED dynamic_reconfigure COMPONENTS
   cmake_modules
 )
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 generate_dynamic_reconfigure_options(
   #cfg/KinovaPositionConfig.cfg
