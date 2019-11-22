@@ -91,6 +91,9 @@
   </node>
 
 
+  <node pkg="kinova_driver" type="hlpr_trajectory_controller" name="jaco_trajectory_controller" output="screen">
+    <param name="sim" value="false" />
+  </node>
 
 
 
