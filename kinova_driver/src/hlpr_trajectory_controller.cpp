@@ -175,6 +175,15 @@ static inline double nearest_equivalent(double desired, double current)
 void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr &goal)
 {
   int numPoints = goal->trajectory.points.size();
+
+  // ensure that the trajectory has at least 2 points
+  bool addStartState = false;
+  if (numPoints < 2)
+  {
+    addStartState = true;
+    numPoints ++;
+  }
+
   vector< ecl::Array<double> > jointPoints;
   jointPoints.resize(NUM_JACO_JOINTS);
   for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
@@ -182,13 +191,26 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
     jointPoints[i].resize(numPoints);
   }
 
-  ecl::Array<double> timePoints(numPoints);
+  // change to timing vector if there are too few points, see added start state for splining below
+  // (have to change this up here because ecl::Array is not easy to dynamically change!)
+  int correctedNumPoints = numPoints;
+  if (numPoints < 2)
+  {
+    correctedNumPoints++;
+  }
+  ecl::Array<double> timePoints(correctedNumPoints);
+  if (numPoints < 2)
+  {
+    timePoints[0] = 0;
+  }
+
+  int offset = correctedNumPoints - numPoints;
 
   // get trajectory data
   for (unsigned int i = 0; i < numPoints; i++)
   {
     bool includedJoints[NUM_JACO_JOINTS] = { };
-    timePoints[i] = goal->trajectory.points[i].time_from_start.toSec();
+    timePoints[i+offset] = goal->trajectory.points[i].time_from_start.toSec();
 
     for (unsigned int trajectoryIndex = 0; trajectoryIndex < goal->trajectory.joint_names.size(); trajectoryIndex++)
     {
@@ -205,6 +227,19 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
     for (unsigned int j = 0; j < NUM_JACO_JOINTS; j++)
       if (!includedJoints[j])
         jointPoints[j][i] = jointStates.position[j];
+  }
+
+  // add start state if the trajectory has too few points to calculate a spline
+  if (numPoints < 2)
+  {
+    ROS_WARN("WARNING: goal trajectory has less than 2 points, adding current robot state as trajectory start to allow for splining...");
+    ecl::Array<double> startPoints(NUM_JACO_JOINTS);
+    for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
+    {
+      startPoints[i] = jointStates.position[i];
+    }
+    jointPoints.insert(jointPoints.begin(), startPoints);
+    numPoints ++;
   }
 
   // Gather timing corrections for trajectory segments that violate max velocity
