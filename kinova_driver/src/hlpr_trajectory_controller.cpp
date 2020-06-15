@@ -175,14 +175,6 @@ static inline double nearest_equivalent(double desired, double current)
 void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr &goal)
 {
   int numPoints = goal->trajectory.points.size();
-
-  vector< ecl::Array<double> > jointPoints;
-  jointPoints.resize(NUM_JACO_JOINTS);
-  for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
-  {
-    jointPoints[i].resize(numPoints);
-  }
-
   // change to timing vector if there are too few points, see added start state for splining below
   // (have to change this up here because ecl::Array is not easy to dynamically change!)
   int correctedNumPoints = numPoints;
@@ -190,6 +182,15 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
   {
     correctedNumPoints++;
   }
+
+  vector< ecl::Array<double> > jointPoints;
+  jointPoints.resize(NUM_JACO_JOINTS);
+  for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
+  {
+    jointPoints[i].resize(correctedNumPoints);
+  }
+
+  
   ecl::Array<double> timePoints(correctedNumPoints);
   if (numPoints < 2)
   {
@@ -210,7 +211,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
       int jointIndex = distance(jointNames.begin(), find(jointNames.begin(), jointNames.end(), jointName));
       if (jointIndex >= 0 && jointIndex < NUM_JACO_JOINTS)
       {
-        jointPoints[jointIndex][i] = goal->trajectory.points.at(i).positions.at(trajectoryIndex);
+        jointPoints[jointIndex][i+offset] = goal->trajectory.points.at(i).positions.at(trajectoryIndex);
         includedJoints[jointIndex] = true;
       }
     }
@@ -218,19 +219,19 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
     // Fill non-included joints with current joint state
     for (unsigned int j = 0; j < NUM_JACO_JOINTS; j++)
       if (!includedJoints[j])
-        jointPoints[j][i] = jointStates.position[j];
+        jointPoints[j][i+offset] = jointStates.position[j];
   }
 
   // add start state if the trajectory has too few points to calculate a spline
   if (numPoints < 2)
   {
     ROS_WARN("WARNING: goal trajectory has less than 2 points, adding current robot state as trajectory start to allow for splining...");
+    // this is a problem - treats jointPoints like it's timeXjoints, when it's actually jointsXtime
     ecl::Array<double> startPoints(NUM_JACO_JOINTS);
     for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
     {
-      startPoints[i] = jointStates.position[i];
+      jointPoints[i][0] = jointStates.position[i];
     }
-    jointPoints.insert(jointPoints.begin(), startPoints);
     numPoints ++;
   }
 
@@ -252,7 +253,9 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
 
     for (unsigned int j = 0; j < NUM_JACO_JOINTS; j++)
     {
+      ROS_INFO("j = %d", j);
       float time = fabs(jointPoints[j][i] - jointPoints[j][i-1]);
+      ROS_INFO("Got time");
       if (plannedTime > 0)
         vel = fabs(jointPoints[j][i] - jointPoints[j][i-1]) / plannedTime;
 
@@ -261,6 +264,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
         time /= 0.9*LARGE_ACTUATOR_VELOCITY;
         if (plannedTime > 0 && vel > 0.9*LARGE_ACTUATOR_VELOCITY)
           validTime = false;
+        ROS_INFO("Finished conditional");
       }
       else
       {
@@ -277,6 +281,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
       correctedTime[i] = maxTime;
   }
 
+  ROS_INFO("Apply timing corrections");
   // Apply timing corrections
   for (unsigned int i = 1; i < numPoints; i++)
   {
@@ -314,6 +319,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
   vector<ecl::SmoothLinearSpline> splines;
   splines.resize(NUM_JACO_JOINTS);
 
+  ROS_INFO("Start splining");
   // Setup cubic storage in case
   vector<ecl::CubicSpline> cubic_splines;
   cubic_splines.resize(NUM_JACO_JOINTS);
