@@ -176,14 +176,6 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
 {
   int numPoints = goal->trajectory.points.size();
 
-  // ensure that the trajectory has at least 2 points
-  bool addStartState = false;
-  if (numPoints < 2)
-  {
-    addStartState = true;
-    numPoints ++;
-  }
-
   vector< ecl::Array<double> > jointPoints;
   jointPoints.resize(NUM_JACO_JOINTS);
   for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
