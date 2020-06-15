@@ -175,6 +175,7 @@ static inline double nearest_equivalent(double desired, double current)
 void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr &goal)
 {
   int numPoints = goal->trajectory.points.size();
+  int origNumPoints = goal->trajectory.points.size();
   // change to timing vector if there are too few points, see added start state for splining below
   // (have to change this up here because ecl::Array is not easy to dynamically change!)
   int correctedNumPoints = numPoints;
@@ -245,7 +246,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
 //  ecl::Array<double> correctedTime(numPoints);
   for (unsigned int i = 1; i < numPoints; i++)
   {
-    float maxTime = 0.0;
+    float maxTime = 5.0;
     float vel = 0.0;
 
     float plannedTime = timePoints[i] - timePoints[i-1];
@@ -253,24 +254,26 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
 
     for (unsigned int j = 0; j < NUM_JACO_JOINTS; j++)
     {
-      ROS_INFO("j = %d", j);
       float time = fabs(jointPoints[j][i] - jointPoints[j][i-1]);
-      ROS_INFO("Got time");
       if (plannedTime > 0)
         vel = fabs(jointPoints[j][i] - jointPoints[j][i-1]) / plannedTime;
 
       if (j <= 3)
       {
         time /= 0.9*LARGE_ACTUATOR_VELOCITY;
-        if (plannedTime > 0 && vel > 0.9*LARGE_ACTUATOR_VELOCITY)
+        if (plannedTime > 0 && vel > 0.9*LARGE_ACTUATOR_VELOCITY) {
+          ROS_WARN("Invalid velocity: %f on joint %d", vel, j);
           validTime = false;
-        ROS_INFO("Finished conditional");
+        }
+          
       }
       else
       {
         time /= 0.9*SMALL_ACTUATOR_VELOCITY;
-        if (plannedTime > 0 && vel > 0.9*SMALL_ACTUATOR_VELOCITY)
+        if (plannedTime > 0 && vel > 0.9*SMALL_ACTUATOR_VELOCITY){
+          ROS_WARN("Invalid velocity: %f on joint %d", vel, j);
           validTime = false;
+        }
       }
 
       if (time > maxTime)
@@ -281,7 +284,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
       correctedTime[i] = maxTime;
   }
 
-  ROS_INFO("Apply timing corrections");
+
   // Apply timing corrections
   for (unsigned int i = 1; i < numPoints; i++)
   {
@@ -319,7 +322,6 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
   vector<ecl::SmoothLinearSpline> splines;
   splines.resize(NUM_JACO_JOINTS);
 
-  ROS_INFO("Start splining");
   // Setup cubic storage in case
   vector<ecl::CubicSpline> cubic_splines;
   cubic_splines.resize(NUM_JACO_JOINTS);
@@ -382,26 +384,24 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
     bool jointError = true;
     while (abs(totalError - prevError) > 0.001 && jointError)
     {
-        prevError = totalError;
+      prevError = totalError;
 
-        // Copy from joint_state publisher to current joints
-        for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
-        {
-          current_joint_pos[i] = jointStates.position[i];
-        }
-
-        // Compute total error of all joints away from last position
-        totalError = 0;
-        for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
-        {
-          currentPoint = simplify_angle(current_joint_pos[i]);
-          error[i] = nearest_equivalent(simplify_angle(goal->trajectory.points[numPoints-1].positions[i]),currentPoint) - currentPoint;
-          totalError += fabs(error[i]);
-          jointError = jointError || error[i] > ERROR_THRESHOLD;
-        }
-
-    // Rate to check if error has changed
-    ros::Duration(0.1).sleep();
+      // Copy from joint_state publisher to current joints
+      for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
+      {
+        current_joint_pos[i] = jointStates.position[i];
+      }
+      // Compute total error of all joints away from last position
+      totalError = 0;
+      for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
+      {
+        currentPoint = simplify_angle(current_joint_pos[i]);
+        error[i] = nearest_equivalent(simplify_angle(goal->trajectory.points[origNumPoints - 1].positions[i]),currentPoint) - currentPoint;
+        totalError += fabs(error[i]);
+        jointError = jointError || error[i] > ERROR_THRESHOLD;
+      }
+      // Rate to check if error has changed
+      ros::Duration(0.1).sleep();
     }
 
     // Tell the server we finished the trajectory
