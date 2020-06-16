@@ -7,6 +7,7 @@ JacoTrajectoryController::JacoTrajectoryController() : pnh("~"),
 {
   pnh.param("max_curvature", maxCurvature, 100.0);
   pnh.param("sim", sim_flag_, false);
+  pnh.param<std::string>("joint_state_topic", jointStateTopic, "/j2s7s300_driver/out/joint_state");
 
   jointNames.clear();
   jointNames.push_back("j2s7s300_joint_1");
@@ -75,7 +76,7 @@ JacoTrajectoryController::JacoTrajectoryController() : pnh("~"),
   }
 
   // Subscribes to the joint states of the robot
-  jointStatesSubscriber = n.subscribe("joint_states", 1, &JacoTrajectoryController::jointStateCallback, this);
+  jointStatesSubscriber = n.subscribe(jointStateTopic.c_str(), 1, &JacoTrajectoryController::jointStateCallback, this);
 
   // Start the trajectory server
   smoothTrajectoryServer.start();
@@ -178,8 +179,9 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
   int origNumPoints = goal->trajectory.points.size();
   // change to timing vector if there are too few points, see added start state for splining below
   // (have to change this up here because ecl::Array is not easy to dynamically change!)
+  bool prepend_curr_pos = goal->trajectory.points[0].time_from_start.toSec() != 0;
   int correctedNumPoints = numPoints;
-  if (numPoints < 2)
+  if (prepend_curr_pos)
   {
     correctedNumPoints++;
   }
@@ -193,7 +195,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
 
   
   ecl::Array<double> timePoints(correctedNumPoints);
-  if (numPoints < 2)
+  if (prepend_curr_pos)
   {
     timePoints[0] = 0;
   }
@@ -224,9 +226,9 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
   }
 
   // add start state if the trajectory has too few points to calculate a spline
-  if (numPoints < 2)
+  if (prepend_curr_pos)
   {
-    ROS_WARN("WARNING: goal trajectory has less than 2 points, adding current robot state as trajectory start to allow for splining...");
+    ROS_WARN("WARNING: goal trajectory does not start at t=0, adding current robot state as trajectory start to allow for splining...");
     // this is a problem - treats jointPoints like it's timeXjoints, when it's actually jointsXtime
     ecl::Array<double> startPoints(NUM_JACO_JOINTS);
     for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
@@ -316,7 +318,6 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
       }
     }
   }
-
 
   // Spline the given points to smooth the trajectory
   vector<ecl::SmoothLinearSpline> splines;
@@ -424,11 +425,10 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
     ros::Timer cmd_publisher = n.createTimer(ros::Duration(0.01), &JacoTrajectoryController::publishCmd, this);
     while (!trajectoryComplete)
     {
-      if (!joint_state_flag)
+      while (!joint_state_flag)
       {
         rate.sleep();
         ros::spinOnce();
-        continue;
       }
 
       //check for preempt requests from clients
@@ -545,7 +545,8 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
           }
           else
           {
-            splineValue = (splines.at(i))(t);
+            ecl::SmoothLinearSpline tmp_spline = splines.at(i);
+            splineValue = tmp_spline(t);
           }
           error[i] = nearest_equivalent(simplify_angle(splineValue), currentPoint) - currentPoint;
         }
@@ -566,7 +567,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
       }
 
       //for debugging:
-      cout << error[0] << ", " << error[1] << ", " << error[2] << ", " << error[3] << ", " << error[4] << ", " << error[5] << ", " << error[6] << endl;
+      // cout << error[0] << ", " << error[1] << ", " << error[2] << ", " << error[3] << ", " << error[4] << ", " << error[5] << ", " << error[6] << endl;
 
       for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
       {
