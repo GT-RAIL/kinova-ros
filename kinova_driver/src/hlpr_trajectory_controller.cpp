@@ -502,7 +502,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
           {
             ROS_INFO("No joint error");
           }
-          else if (ros::Time::now().toSec() - finalPointTime.toSec() >= 3.0)
+          else if (ros::Time::now().toSec() - finalPointTime.toSec() >= 5.0)
           {
             ROS_INFO("5 second timeout reached");
           }
@@ -551,6 +551,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
         }
       }
 
+
       //calculate control input
       //populate the velocity command
       {
@@ -565,7 +566,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
       }
 
       //for debugging:
-      // cout << error[0] << ", " << error[1] << ", " << error[2] << ", " << error[3] << ", " << error[4] << ", " << error[5] << ", " << error[6] << endl;
+      cout << error[0] << ", " << error[1] << ", " << error[2] << ", " << error[3] << ", " << error[4] << ", " << error[5] << ", " << error[6] << endl;
 
       for (unsigned int i = 0; i < NUM_JACO_JOINTS; i++)
       {
