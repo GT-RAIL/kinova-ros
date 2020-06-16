@@ -248,7 +248,7 @@ void JacoTrajectoryController::executeSmoothTrajectory(const control_msgs::Follo
 //  ecl::Array<double> correctedTime(numPoints);
   for (unsigned int i = 1; i < numPoints; i++)
   {
-    float maxTime = 5.0;
+    float maxTime = 0.0;
     float vel = 0.0;
 
     float plannedTime = timePoints[i] - timePoints[i-1];
